@@ -1,0 +1,34 @@
+[
+  {
+    "name": "rollup-a",
+    "identifier": "hoodi/rollup-a",
+    "chainId": 77777,
+    "rpc": [
+      "http://optimism-stack-geth:8545"
+    ],
+    "explorers": [
+      "https://blockscout-rollup-1.stage.ops.ssvlabsinternal.com/"
+    ],
+    "dataAvailabilityType": "eth-da",
+    "parent": {
+      "type": "L2",
+      "chain": "hoodi"
+    }
+  },
+  {
+    "name": "rollup-b",
+    "identifier": "hoodi/rollup-b",
+    "chainId": 88888,
+    "rpc": [
+      "http://optimism-stack-2-geth:8545"
+    ],
+    "explorers": [
+      "https://blockscout-rollup-2.stage.ops.ssvlabsinternal.com/"
+    ],
+    "dataAvailabilityType": "eth-da",
+    "parent": {
+      "type": "L2",
+      "chain": "hoodi"
+    }
+  }
+]

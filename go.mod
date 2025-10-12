@@ -10,7 +10,10 @@ require github.com/golangci/golangci-lint/v2 v2.5.0 // indirect
 
 tool golang.org/x/tools/cmd/goimports
 
-require golang.org/x/tools v0.37.0 // indirect
+require (
+	github.com/klauspost/compress v1.17.9
+	golang.org/x/tools v0.37.0 // indirect
+)
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect

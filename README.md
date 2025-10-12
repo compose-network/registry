@@ -19,13 +19,19 @@ The goal is to keep network metadata lightweight, auditable, and easy to consume
 
 - Module: `github.com/compose-network/registry`
 - Embedded source: `data/chainList.toml`
-- Public API: `github.com/compose-network/registry/data` (List, Get, Version)
+- Public API: `github.com/compose-network/registry/chainlist`
+  - List, Get, GetByIdentifier, ListByNetwork, Version
 
 ### Layout
-- `data/chainList.toml` — human‑authored chain list (name, slug, chain_id, parent, public_rpc, explorer, status, registry_level).
-- `data/` — Go package with `//go:embed` and a minimal API.
+
+- `data/chainList.toml` — auto-generated chain summary file:
+  - `[[chains]]` entries with fields: `name`, `identifier` (e.g., `hoodi/rollup-a`), `chain_id`, `rpc`[], `explorers`[] and nested `parent.{type, chain}`.
+  - We derive a short `slug` at runtime from `identifier`’s suffix (e.g., `rollup-a`).
+- `chainlist/` — Go package that embeds `data/chainList.toml` and exposes List/Get/GetByIdentifier/ListByNetwork/Version.
+- `networks/<network>/` — Go package that embeds `data/networks/<network>/*.toml` and `compose.toml` and exposes ComposeChains/NetworkConfig.
+- `data/` — Data files only (no Go): chainList.{toml,json}, networks/<net>/*.toml, genesis/, dictionary.
 - `internal/types/` — shared types for dev tools.
-- `tools/cmd/{validate,generate}` — offline validator and TOML→JSON generator.
+- `tools/cmd/{validate,chainlist-gen}` — validator and generator (configs → chainList.{toml,json}).
 
 ## ⚙️ Build & Dev
 
@@ -36,22 +42,22 @@ Using the Makefile:
 # Format (goimports) and tidy modules
 make format
 
-# Build, test, validate TOML, and generate JSON artifact
+# Generate from configs, validate, build, test
+make generate
+make validate
 make build
 make test
-make validate
-make generate
 
 # Lint (uses the tool declared in go.mod)
 make lint
 ```
 
-Without Makefile:
+Without Makefile (generate both files from configs):
 ```bash
 go build ./...
 go test ./...
+go run ./tools/cmd/chainlist-gen -base .
 go run ./tools/cmd/validate -in data/chainList.toml
-go run ./tools/cmd/generate -in data/chainList.toml -out generated/chainList.json
 ```
 
 ## 📦 Usage (as a module)
@@ -61,10 +67,13 @@ go get github.com/compose-network/registry
 ```
 
 ```go
-import regdata "github.com/compose-network/registry/data"
+import "github.com/compose-network/registry/chainlist"
 
-chains, _ := regdata.List()      // []Chain{Name, Slug, ChainID, PublicRPC}
-ver,    _ := regdata.Version()   // registry version string
+chains, _ := chainlist.List()      // []Entry with arrays: RPC, Explorers
+one, ok, _ := chainlist.Get("rollup-a")
+byID, ok2, _ := chainlist.GetByIdentifier("hoodi/rollup-a")
+hoodiOnly, _ := chainlist.ListByNetwork("hoodi")
+ver, _ := chainlist.Version()      // e.g., vchains-2
 ```
 
 ## 🧪 CI
@@ -78,3 +87,7 @@ Issues and PRs are welcome. Please keep the public API minimal and additive. For
 ## 📄 License
 
 Repository is distributed under [GPL-3.0](LICENSE).
+
+## Credit
+
+Inspired by Optimism's [SuperChain Registry](https://github.com/ethereum-optimism/superchain-registry/)

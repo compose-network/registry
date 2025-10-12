@@ -17,14 +17,23 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Check generated chainList is up to date
+        run: make check-generated
+
+      - name: Generate (explicit)
+        run: make generate
+
+      - name: Validate chainList.toml
+        run: make validate
+
       - name: Go Build
         run: make build
 
       - name: Go Test
         run: make test
 
-      - name: Validate chainList.toml
-        run: make validate
+      - name: Check genesis files
+        run: make checkgenesis
 
       - name: Lint
         run: make lint

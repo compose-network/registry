@@ -1,25 +1,21 @@
-# Rollups Registry — chain list (authoritative, human‑readable)
-version = "0.1.0"
-generated = ""
+[[chains]]
+  name = "rollup-a"
+  identifier = "hoodi/rollup-a"
+  chain_id = 77777
+  rpc = ["http://optimism-stack-geth:8545"]
+  explorers = ["https://blockscout-rollup-1.stage.ops.ssvlabsinternal.com/"]
+  data_availability_type = "eth-da"
+  [chains.parent]
+    type = "L2"
+    chain = "hoodi"
 
-[[chain]]
-name = "Rollup A"
-slug = "rollup-a"
-chain_id = 77777
-parent = "eip155:11155111" # dev: treat as Sepolia for tooling
-public_rpc = "http://optimism-stack-geth:8545"
-explorer = "" # EIP-3091 base (set when public)
-data_availability_type = "EthereumCalldata"
-status = "incubating"
-registry_level = 1
-
-[[chain]]
-name = "Rollup B"
-slug = "rollup-b"
-chain_id = 88888
-parent = "eip155:11155111"
-public_rpc = "http://optimism-stack-2-geth:8545"
-explorer = ""
-data_availability_type = "EthereumCalldata"
-status = "incubating"
-registry_level = 1
+[[chains]]
+  name = "rollup-b"
+  identifier = "hoodi/rollup-b"
+  chain_id = 88888
+  rpc = ["http://optimism-stack-2-geth:8545"]
+  explorers = ["https://blockscout-rollup-2.stage.ops.ssvlabsinternal.com/"]
+  data_availability_type = "eth-da"
+  [chains.parent]
+    type = "L2"
+    chain = "hoodi"

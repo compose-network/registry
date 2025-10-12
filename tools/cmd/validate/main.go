@@ -13,13 +13,13 @@ import (
 	t "github.com/compose-network/registry/internal/types"
 )
 
-var caip2 = regexp.MustCompile(`^eip155:\d+$`)
+var identRe = regexp.MustCompile(`^[a-z0-9-]+/[a-z0-9-]+$`)
 
 func main() {
 	var in string
 	flag.StringVar(&in, "in", "data/chainList.toml", "input TOML path")
 	flag.Parse()
-	var cl t.ChainList
+	var cl t.ChainListTOML
 	if _, err := toml.DecodeFile(in, &cl); err != nil {
 		fatalf("decode TOML: %v", err)
 	}
@@ -29,46 +29,55 @@ func main() {
 	fmt.Println("validation ok")
 }
 
-func validate(cl t.ChainList) error {
-	seenName := map[string]bool{}
-	seenSlug := map[string]bool{}
-	seenID := map[int64]bool{}
+func validate(cl t.ChainListTOML) error {
+	seenIdent := map[string]bool{}
+	seenID := map[uint64]bool{}
 	for i, c := range cl.Chains {
-		if c.Name == "" || c.Slug == "" {
-			return fmt.Errorf("chain[%d]: name/slug required", i)
+		if strings.TrimSpace(c.Name) == "" {
+			return fmt.Errorf("chain[%d]: name required", i)
 		}
-		if seenName[c.Name] {
-			return fmt.Errorf("duplicate name: %s", c.Name)
+		if !identRe.MatchString(strings.TrimSpace(c.Identifier)) {
+			return fmt.Errorf("chain[%d]: identifier must be '<network>/<slug>'", i)
 		}
-		if seenSlug[c.Slug] {
-			return fmt.Errorf("duplicate slug: %s", c.Slug)
-		}
-		if c.ChainID <= 0 {
+		if c.ChainID == 0 {
 			return fmt.Errorf("chain[%d]: invalid chain_id", i)
 		}
 		if seenID[c.ChainID] {
 			return fmt.Errorf("duplicate chain_id: %d", c.ChainID)
 		}
-		seenName[c.Name], seenSlug[c.Slug], seenID[c.ChainID] = true, true, true
+		if seenIdent[c.Identifier] {
+			return fmt.Errorf("duplicate identifier: %s", c.Identifier)
+		}
+		seenIdent[c.Identifier], seenID[c.ChainID] = true, true
 
-		if c.Parent != "" && !caip2.MatchString(c.Parent) {
-			return fmt.Errorf("chain[%d]: parent must be CAIP-2 eip155:<id>", i)
+		// Require parent object
+		if strings.TrimSpace(c.Parent.Type) == "" || strings.TrimSpace(c.Parent.Chain) == "" {
+			return fmt.Errorf("chain[%d]: parent.type/parent.chain required", i)
 		}
-		if err := mustURL(c.PublicRPC); err != nil {
-			return fmt.Errorf("chain[%d] public_rpc: %w", i, err)
+		if strings.ToUpper(c.Parent.Type) != "L2" {
+			return fmt.Errorf("chain[%d]: parent.type must be L2", i)
 		}
-		if c.Explorer != "" {
-			if err := mustURL(c.Explorer); err != nil {
-				return fmt.Errorf("chain[%d] explorer: %w", i, err)
+
+		// RPC should be non-empty list of URLs
+		if len(c.RPC) == 0 {
+			return fmt.Errorf("chain[%d]: rpc must contain at least one URL", i)
+		}
+		for _, r := range c.RPC {
+			if err := mustURL(r); err != nil {
+				return fmt.Errorf("chain[%d] rpc: %w", i, err)
 			}
 		}
-		switch strings.ToLower(c.Status) {
-		case "active", "incubating", "deprecated":
-		default:
-			return fmt.Errorf("chain[%d]: invalid status %q", i, c.Status)
+		// Explorers optional but if present must be URLs
+		for _, e := range c.Explorers {
+			if err := mustURL(e); err != nil {
+				return fmt.Errorf("chain[%d] explorers: %w", i, err)
+			}
 		}
-		if c.RegistryLevel < 0 || c.RegistryLevel > 3 {
-			return fmt.Errorf("chain[%d]: registry_level out of range", i)
+		// dataAvailabilityType one of known values (align with OP: eth-da or alt-da)
+		switch strings.ToLower(c.DataAvailabilityType) {
+		case "eth-da", "alt-da":
+		default:
+			return fmt.Errorf("chain[%d]: data_availability_type must be 'eth-da' or 'alt-da'", i)
 		}
 	}
 	return nil
