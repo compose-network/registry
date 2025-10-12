@@ -1,0 +1,63 @@
+name = "rollup-a"
+public_rpc = ""
+sequencer_rpc = ""
+explorer = ""
+superchain_level = 1
+governed_by_optimism = false
+superchain_time = 0
+data_availability_type = "EthereumCalldata"
+deployment_tx_hash = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+chain_id = 77777
+batch_inbox_addr = "0x00c84b8ef1bc689e56ccd6ddcb65a73c227216a0"
+block_time = 6
+seq_window_size = 3600
+max_sequencer_drift = 600
+
+[optimism]
+eip1559_elasticity = 6
+eip1559_denominator = 50
+eip1559_denominator_canyon = 250
+
+[hardforks]
+regolith_time = 0
+canyon_time = 0
+delta_time = 0
+ecotone_time = 0
+fjord_time = 0
+granite_time = 0
+holocene_time = 0
+isthmus_time = 1755610279
+jovian_time = 0
+interop_time = 0
+
+[genesis]
+l2_time = 1756804584
+
+[genesis.l1]
+hash = "0x342d8cb64662d34ea226b23d4c437b4df8691a31ff3cc2a4e9f716d04969a1f3"
+number = 1129565
+
+[genesis.l2]
+hash = "0x267e09fde3e330d2587e7e5fe868dff597a560e95632c52d498fa5524c173beb"
+number = 0
+
+[genesis.system_config]
+batcherAddress = "0xc9b3bf6c11161eba2445d657193e69203b5dab92"
+overhead = "0x0000000000000000000000000000000000000000000000000000000000000000"
+scalar = "0x010000000000000000000000000000000000000000000000000c5fc500000558"
+gasLimit = 60000000
+baseFeeScalar = 0
+blobBaseFeeScalar = 0
+
+[addresses]
+OptimismPortalProxy = "0x48bc7f6edcb4a9772fd1d61e277ea53dd037cc41"
+SystemConfigProxy = "0x793212bded812674896f613611415214cc383c20"
+L2OutputOracleProxy = "0x865C7354759A7B8cEc905BDe1A250c2cd58cB554"
+DisputeGameFactoryProxy = "0x11a43180a92adf4f1b8061260cb9985f634db132"
+Mailbox = "0x248721a59a2756E579026aDA017bd9B6adFe3e57"
+
+[compose.sequencer]
+host = "optimism-stack-geth"
+port = 9898
+public_key = ""

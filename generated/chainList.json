@@ -1,25 +1,23 @@
 {
   "version": "0.1.0",
-  "generated": "2025-10-09T08:08:36Z",
+  "generated": "2025-10-12T10:10:11Z",
   "chains": [
     {
-      "name": "Rollup A (Local)",
+      "name": "Rollup A",
       "slug": "rollup-a",
       "chain_id": 77777,
       "parent": "eip155:11155111",
-      "public_rpc": "http://localhost:18545",
-      "explorer": "http://localhost:19000",
+      "public_rpc": "http://optimism-stack-geth:8545",
       "data_availability_type": "EthereumCalldata",
       "status": "incubating",
       "registry_level": 1
     },
     {
-      "name": "Rollup B (Local)",
+      "name": "Rollup B",
       "slug": "rollup-b",
       "chain_id": 88888,
       "parent": "eip155:11155111",
-      "public_rpc": "http://localhost:28545",
-      "explorer": "http://localhost:29000",
+      "public_rpc": "http://optimism-stack-2-geth:8545",
       "data_availability_type": "EthereumCalldata",
       "status": "incubating",
       "registry_level": 1

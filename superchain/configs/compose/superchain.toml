@@ -1,0 +1,15 @@
+name = "compose"
+
+# Minimal network-level info; extend if needed later.
+[l1]
+chain_id = 560048
+public_rpc = ""
+explorer = ""
+
+# ProtocolVersions addr used by op-node; set when available.
+protocol_versions_addr = "0x0000000000000000000000000000000000000000"
+
+# Shared Publisher (L1) configuration (optional)
+[compose.sp]
+superblock_contract = "0x0000000000000000000000000000000000000001"
+dispute_game_factory = "0x0000000000000000000000000000000000000001"

@@ -1,7 +1,7 @@
 <p align="center"><img src="https://framerusercontent.com/images/9FedKxMYLZKR9fxBCYj90z78.png?scale-down-to=512&width=893&height=363" alt="SSV Network"></p>
 
-<img src="https://github.com/ssvlabs/template-repository/actions/workflows/main.yml/badge.svg" alt="Check" />
-<a href="https://discord.com/invite/ssvnetworkofficial"><img src="https://img.shields.io/badge/discord-%23ssvlabs-8A2BE2.svg" alt="Discord" /></a>
+<img src="https://github.com/compose-network/registry/actions/workflows/ci.yml/badge.svg" alt="CI" />
+<a href="https://discord.gg/compose-network"><img src="https://img.shields.io/badge/discord-compose--network-5865F2.svg" alt="Discord" /></a>
 
 
 <p align="center"><b>Compose Registry</b> — Embedded chain list for Compose projects</p>
