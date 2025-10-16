@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+
 	assets "github.com/compose-network/registry"
 )
 

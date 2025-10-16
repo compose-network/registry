@@ -1,8 +1,8 @@
-.PHONY: all build test validate generate lint format tidy checkgenesis check-generated
+.PHONY: all build test validate generate lint format tidy check-genesis check-generated lint-fix verify
 
 GO ?= go
 
-all: generate validate build lint test
+all: build lint test generate validate check-generated check-genesis
 
 build:
 	$(GO) build ./...
@@ -10,24 +10,29 @@ build:
 test:
 	$(GO) test ./...
 
+tidy:
+	GOWORK=off GOTOOLCHAIN=go1.23.5 $(GO) mod tidy
+
 validate:
-	$(GO) run ./tools/cmd/validate -in data/chainList.toml
+	$(MAKE) -C tools validate
 
 generate:
-	$(GO) run ./tools/cmd/chainlist-gen -base . -out-toml data/chainList.toml -out-json data/chainList.json
+	$(MAKE) -C tools chainlist-gen
 
-checkgenesis:
-	$(GO) run ./tools/cmd/checkgenesis
+check-genesis:
+	$(MAKE) -C tools checkgenesis
 
 lint:
-	$(GO) tool golangci-lint run ./...
+	$(MAKE) -C tools lint
 
 format:
-	$(GO) tool goimports -w .
+	$(MAKE) -C tools format
 
-tidy:
-	$(GO) mod tidy
+lint-fix:
+	$(MAKE) -C tools lint-fix
 
 check-generated:
-	$(GO) run ./tools/cmd/chainlist-gen -base . -out-toml data/chainList.toml -out-json data/chainList.json
-	@git diff --quiet -- data/chainList.toml data/chainList.json || (echo 'error: chainList files are stale; run make generate and commit' && git --no-pager diff -- data/chainList.toml data/chainList.json && exit 1)
+	$(MAKE) -C tools check-generated
+
+verify:
+	$(MAKE) -C tools verify

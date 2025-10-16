@@ -31,15 +31,7 @@ jobs:
         run: make test
 
       - name: Check genesis files
-        run: make checkgenesis
+        run: make check-genesis
 
       - name: Lint
         run: make lint
-
-      - name: Check formatting (goimports)
-        run: |
-          files=$(go tool goimports -l .)
-          if [ -n "$files" ]; then
-            echo "goimports found unformatted files:" && echo "$files"
-            exit 1
-          fi
