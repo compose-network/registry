@@ -3,6 +3,9 @@ package registry
 import (
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -13,30 +16,56 @@ import (
 
 // Sentinel errors for not-found cases. Use errors.Is to test them.
 var (
-    ErrNetworkNotFound = errors.New("network not found")
-    ErrChainNotFound   = errors.New("chain not found")
+	ErrNetworkNotFound = errors.New("network not found")
+	ErrChainNotFound   = errors.New("chain not found")
 )
 
-// Network is a lightweight network handle (slug only).
-type Network struct{ slug string }
+// Registry provides access to the embedded registry (default) or a directory on disk.
+// It owns a normalized fs rooted at the data/ folder, so lookups use paths like
+// "networks/<network>/<chain>.toml".
+type Registry struct{ fs fs.FS }
+
+// New returns a Registry backed by the embedded assets under data/.
+func New() Registry {
+	sub, _ := fs.Sub(assets.FS, "data")
+	return Registry{fs: sub}
+}
+
+// NewFromDir returns a Registry backed by a directory on disk that contains
+// a data layout compatible with the embedded one (expects a "networks/" directory).
+func NewFromDir(dir string) (Registry, error) {
+	// Validate that dir contains a networks/ directory
+	if fi, err := os.Stat(filepath.Join(dir, "networks")); err != nil || !fi.IsDir() {
+		return Registry{}, fmt.Errorf("registry: networks directory not found in %q", dir)
+	}
+	return Registry{fs: os.DirFS(dir)}, nil
+}
+
+// Network is a lightweight network handle (slug-only). Use LoadConfig to decode TOML.
+type Network struct {
+	slug string
+	r    Registry
+}
 
 // Slug returns the network slug.
 func (n Network) Slug() string { return n.slug }
 
 // Chain is a lightweight chain handle (slug + parent network).
 type Chain struct {
-    slug    string
-    network Network
+	slug string
+	n    Network
 }
 
 // Slug returns the chain slug.
-func (c Chain) Slug() string     { return c.slug }
-// Network returns the parent network handle.
-func (c Chain) Network() Network { return c.network }
-// Identifier returns "<network>/<slug>".
-func (c Chain) Identifier() string { return c.network.slug + "/" + c.slug }
+func (c Chain) Slug() string { return c.slug }
 
-// ChainConfig is decoded from data/networks/<network>/<slug>.toml.
+// Network returns the parent network handle.
+func (c Chain) Network() Network { return c.n }
+
+// Identifier returns "<network>/<slug>".
+func (c Chain) Identifier() string { return c.n.slug + "/" + c.slug }
+
+// ChainConfig is decoded from networks/<network>/<slug>.toml.
 type ChainConfig struct {
 	Name      string `toml:"name"`
 	ChainID   uint64 `toml:"chain_id"`
@@ -56,7 +85,7 @@ type ChainConfig struct {
 	} `toml:"compose"`
 }
 
-// NetworkConfig is decoded from data/networks/<slug>/compose.toml.
+// NetworkConfig is decoded from networks/<slug>/compose.toml.
 type NetworkConfig struct {
 	Name string `toml:"name"`
 	L1   struct {
@@ -72,9 +101,9 @@ type NetworkConfig struct {
 	} `toml:"compose"`
 }
 
-// ListNetworks returns network handles found under data/networks.
-func ListNetworks() ([]Network, error) {
-	entries, err := assets.FS.ReadDir("data/networks")
+// ListNetworks lists all available networks as handles.
+func (r Registry) ListNetworks() ([]Network, error) {
+	entries, err := fs.ReadDir(r.fs, "networks")
 	if err != nil {
 		return nil, fmt.Errorf("list networks: %w", err)
 	}
@@ -87,22 +116,22 @@ func ListNetworks() ([]Network, error) {
 	sort.Strings(slugs)
 	out := make([]Network, 0, len(slugs))
 	for _, s := range slugs {
-		out = append(out, Network{slug: s})
+		out = append(out, Network{slug: s, r: r})
 	}
 	return out, nil
 }
 
-// GetNetworkBySlug returns a handle if data/networks/<slug> exists.
-func GetNetworkBySlug(slug string) (Network, error) {
-	if _, err := assets.FS.ReadDir(filepath.Join("data/networks", slug)); err != nil {
+// GetNetworkBySlug returns a handle if networks/<slug> exists.
+func (r Registry) GetNetworkBySlug(slug string) (Network, error) {
+	if _, err := fs.ReadDir(r.fs, path.Join("networks", slug)); err != nil {
 		return Network{}, fmt.Errorf("%w: %s", ErrNetworkNotFound, slug)
 	}
-	return Network{slug: slug}, nil
+	return Network{slug: slug, r: r}, nil
 }
 
 // GetNetworkById returns the first network whose L1.ChainID matches.
-func GetNetworkById(l1ChainId uint64) (Network, error) {
-	nets, err := ListNetworks()
+func (r Registry) GetNetworkById(l1ChainId uint64) (Network, error) {
+	nets, err := r.ListNetworks()
 	if err != nil {
 		return Network{}, err
 	}
@@ -120,7 +149,7 @@ func GetNetworkById(l1ChainId uint64) (Network, error) {
 
 // ListChains returns chain handles in this network.
 func (n Network) ListChains() ([]Chain, error) {
-	entries, err := assets.FS.ReadDir(filepath.Join("data/networks", n.slug))
+	entries, err := fs.ReadDir(n.r.fs, path.Join("networks", n.slug))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrNetworkNotFound, n.slug)
 	}
@@ -138,7 +167,7 @@ func (n Network) ListChains() ([]Chain, error) {
 	sort.Strings(slugs)
 	out := make([]Chain, 0, len(slugs))
 	for _, s := range slugs {
-		out = append(out, Chain{slug: s, network: n})
+		out = append(out, Chain{slug: s, n: n})
 	}
 	return out, nil
 }
@@ -150,10 +179,10 @@ func (n Network) GetChainBySlug(slug string) (Chain, error) {
 		return Chain{}, errors.New("empty chain slug")
 	}
 	// existence check only
-	if _, err := assets.FS.ReadFile(filepath.Join("data/networks", n.slug, s+".toml")); err != nil {
+	if _, err := fs.ReadFile(n.r.fs, path.Join("networks", n.slug, s+".toml")); err != nil {
 		return Chain{}, fmt.Errorf("%w: %s/%s", ErrChainNotFound, n.slug, s)
 	}
-	return Chain{slug: s, network: n}, nil
+	return Chain{slug: s, n: n}, nil
 }
 
 // GetChainById returns the first chain in this network whose ChainID matches.
@@ -175,8 +204,8 @@ func (n Network) GetChainById(l2ChainId uint64) (Chain, error) {
 }
 
 // ListChains returns all chain handles across all networks.
-func ListChains() ([]Chain, error) {
-	nets, err := ListNetworks()
+func (r Registry) ListChains() ([]Chain, error) {
+	nets, err := r.ListNetworks()
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +221,7 @@ func ListChains() ([]Chain, error) {
 }
 
 // GetChainByIdentifier returns a chain handle for "<network>/<slug>".
-func GetChainByIdentifier(identifier string) (Chain, error) {
+func (r Registry) GetChainByIdentifier(identifier string) (Chain, error) {
 	s := strings.TrimSpace(identifier)
 	if s == "" {
 		return Chain{}, errors.New("empty identifier")
@@ -203,7 +232,7 @@ func GetChainByIdentifier(identifier string) (Chain, error) {
 	}
 	netSlug := s[:i]
 	chainSlug := s[i+1:]
-	n, err := GetNetworkBySlug(netSlug)
+	n, err := r.GetNetworkBySlug(netSlug)
 	if err != nil {
 		return Chain{}, err
 	}
@@ -211,8 +240,8 @@ func GetChainByIdentifier(identifier string) (Chain, error) {
 }
 
 // GetChainById returns the first chain across all networks whose ChainID matches.
-func GetChainById(l2ChainId uint64) (Chain, error) {
-	nets, err := ListNetworks()
+func (r Registry) GetChainById(l2ChainId uint64) (Chain, error) {
+	nets, err := r.ListNetworks()
 	if err != nil {
 		return Chain{}, err
 	}
@@ -228,27 +257,27 @@ func GetChainById(l2ChainId uint64) (Chain, error) {
 	return Chain{}, ErrChainNotFound
 }
 
-// LoadConfig decodes data/networks/<network>/<slug>.toml for this chain.
+// LoadConfig decodes networks/<network>/<slug>.toml for this chain.
 func (c Chain) LoadConfig() (ChainConfig, error) {
 	s := strings.TrimSpace(c.slug)
 	if s == "" {
 		return ChainConfig{}, errors.New("empty chain slug")
 	}
-	path := filepath.Join("data/networks", c.network.slug, s+".toml")
-	b, err := assets.FS.ReadFile(path)
+	p := path.Join("networks", c.n.slug, s+".toml")
+	b, err := fs.ReadFile(c.n.r.fs, p)
 	if err != nil {
-		return ChainConfig{}, fmt.Errorf("%w: %s/%s", ErrChainNotFound, c.network.slug, s)
+		return ChainConfig{}, fmt.Errorf("%w: %s/%s", ErrChainNotFound, c.n.slug, s)
 	}
 	var cfg ChainConfig
 	if _, err := toml.Decode(string(b), &cfg); err != nil {
-		return ChainConfig{}, fmt.Errorf("decode %s: %w", path, err)
+		return ChainConfig{}, fmt.Errorf("decode %s: %w", p, err)
 	}
 	return cfg, nil
 }
 
-// LoadConfig decodes data/networks/<slug>/compose.toml for this network.
+// LoadConfig decodes networks/<slug>/compose.toml for this network.
 func (n Network) LoadConfig() (NetworkConfig, error) {
-	b, err := assets.FS.ReadFile(filepath.Join("data/networks", n.slug, "compose.toml"))
+	b, err := fs.ReadFile(n.r.fs, path.Join("networks", n.slug, "compose.toml"))
 	if err != nil {
 		return NetworkConfig{}, fmt.Errorf("read compose.toml for %s: %w", n.slug, err)
 	}

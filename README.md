@@ -20,13 +20,13 @@ The goal is to keep network metadata lightweight, auditable, and easy to consume
 - Module: `github.com/compose-network/registry`
 - Embedded sources: `data/networks/<net>/*.toml` and `data/networks/<net>/compose.toml`
 - Public API: `github.com/compose-network/registry/registry`
-  - Lightweight handles + on‑demand LoadConfig.
+  - Lightweight handles + on‑demand LoadConfig (instance‑based).
 
 ### Layout
 
-- `registry/` — Go package that enumerates `data/networks/*` and exposes:
-  - Listing: `ListNetworks()`, `ListChains()` (returns handles; no TOML read)
-  - Lookup: `GetNetworkBySlug(slug)`, `GetNetworkById(l1ChainId)`, `GetChainByIdentifier("<network>/<slug>")`, `GetChainById(l2ChainId)`
+- `registry/` — Go package that enumerates `data/networks/*` and exposes instance methods:
+  - Listing: `(Registry).ListNetworks()`, `(Registry).ListChains()` (handles; no TOML read)
+  - Lookup: `(Registry).GetNetworkBySlug(slug)`, `(Registry).GetNetworkById(l1ChainId)`, `(Registry).GetChainByIdentifier("<network>/<slug>")`, `(Registry).GetChainById(l2ChainId)`
   - Per-network: `Network.LoadConfig()`, `Network.ListChains()`, `Network.GetChainBySlug()`, `Network.GetChainById()`
 - `data/` — Data files only (no Go): networks/<net>/*.toml, genesis/, dictionary. Optionally, a generated `chainList.{toml,json}` for external tooling.
 - `internal/types/` — shared types for dev tools.
@@ -77,8 +77,9 @@ go get github.com/compose-network/registry
 ```go
 import reg "github.com/compose-network/registry/registry"
 
-nets, _ := reg.ListNetworks()                 // []Network handles
-hoodi, _ := reg.GetNetworkBySlug("hoodi")     // specific network
+r := reg.New()
+nets, _ := r.ListNetworks()                    // []Network handles
+hoodi, _ := r.GetNetworkBySlug("hoodi")        // specific network
 fmt.Println(hoodi.Slug())                      // slug (key)
 ncfg, _ := hoodi.LoadConfig()                  // display-only fields
 fmt.Println(ncfg.Name)
@@ -88,8 +89,8 @@ chainA, _ := hoodi.GetChainBySlug("rollup-a")
 acfg, _ := chainA.LoadConfig()                // fields like ChainID, RPC, etc
 chainB, _ := hoodi.GetChainById(77777)
 
-allChains, _ := reg.ListChains()              // all L2 chain handles across networks
-chain, _ := reg.GetChainByIdentifier("hoodi/rollup-a")
+allChains, _ := r.ListChains()                // all L2 chain handles across networks
+chain, _ := r.GetChainByIdentifier("hoodi/rollup-a")
 ccfg, _ := chain.LoadConfig()
 fmt.Println(chain.Slug(), ccfg.Name)          // slug, display name
 parent := chain.Network()                     // recover parent Network
@@ -97,9 +98,13 @@ parent := chain.Network()                     // recover parent Network
 
 ## API at a Glance
 
-- Package functions
+- Constructors
+  - New() → Registry — embedded assets (data/)
+  - NewFromDir(dir string) (Registry, error) — directory-based data source; dir must contain `networks/`
+
+- Registry methods
   - ListNetworks() → []Network — lists available networks (handles only)
-  - GetNetworkBySlug(slug) → Network — returns a handle if data/networks/<slug> exists
+  - GetNetworkBySlug(slug) → Network — handle if networks/<slug> exists
   - GetNetworkById(l1ChainId) → Network — scan via LoadConfig()
   - ListChains() → []Chain — lists all chains across all networks (handles only)
   - GetChainByIdentifier("<network>/<slug>") → Chain — resolves identifier

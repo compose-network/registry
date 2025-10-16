@@ -14,11 +14,11 @@ import (
 )
 
 type chainCfg struct {
-    Name                 string `toml:"name"`
-    ChainID              uint64 `toml:"chain_id"`
-    PublicRPC            string `toml:"public_rpc"`
-    Explorer             string `toml:"explorer"`
-    DataAvailabilityType string `toml:"data_availability_type"`
+	Name                 string `toml:"name"`
+	ChainID              uint64 `toml:"chain_id"`
+	PublicRPC            string `toml:"public_rpc"`
+	Explorer             string `toml:"explorer"`
+	DataAvailabilityType string `toml:"data_availability_type"`
 }
 
 func main() {
@@ -61,7 +61,7 @@ func main() {
 			if _, err := toml.DecodeFile(path, &cfg); err != nil {
 				fatalf("decode %s: %v", path, err)
 			}
-            slug := strings.TrimSuffix(name, ".toml")
+			slug := strings.TrimSuffix(name, ".toml")
 			entry := t.ChainListEntry{
 				Name:                 cfg.Name,
 				Identifier:           network + "/" + slug,

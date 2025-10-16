@@ -1,9 +1,13 @@
 package registry
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestGetNetworks_FindsHoodi(t *testing.T) {
-	nets, err := ListNetworks()
+	r := New()
+	nets, err := r.ListNetworks()
 	if err != nil {
 		t.Fatalf("ListNetworks() error: %v", err)
 	}
@@ -23,7 +27,8 @@ func TestGetNetworks_FindsHoodi(t *testing.T) {
 }
 
 func TestGetNetworkBySlug_AndId(t *testing.T) {
-	hoodi, err := GetNetworkBySlug("hoodi")
+	r := New()
+	hoodi, err := r.GetNetworkBySlug("hoodi")
 	if err != nil {
 		t.Fatalf("GetNetworkBySlug() error: %v", err)
 	}
@@ -35,7 +40,7 @@ func TestGetNetworkBySlug_AndId(t *testing.T) {
 		t.Fatalf("network name = %s, want hoodi", ncfg.Name)
 	}
 	// By L1 chain id
-	hoodi2, err := GetNetworkById(ncfg.L1.ChainID)
+	hoodi2, err := r.GetNetworkById(ncfg.L1.ChainID)
 	if err != nil {
 		t.Fatalf("GetNetworkById() error: %v", err)
 	}
@@ -45,7 +50,8 @@ func TestGetNetworkBySlug_AndId(t *testing.T) {
 }
 
 func TestGetChains_AndLookups(t *testing.T) {
-	hoodi, err := GetNetworkBySlug("hoodi")
+	r := New()
+	hoodi, err := r.GetNetworkBySlug("hoodi")
 	if err != nil {
 		t.Fatalf("GetNetworkBySlug() error: %v", err)
 	}
@@ -56,7 +62,7 @@ func TestGetChains_AndLookups(t *testing.T) {
 	if len(chains) < 2 {
 		t.Fatalf("expected at least 2 chains, got %d", len(chains))
 	}
-	// Lookup by name
+	// Lookup by slug
 	a, err := hoodi.GetChainBySlug("rollup-a")
 	if err != nil {
 		t.Fatalf("GetChainBySlug(rollup-a) error: %v", err)
@@ -89,7 +95,8 @@ func TestGetChains_AndLookups(t *testing.T) {
 }
 
 func TestGetChainByIdentifier(t *testing.T) {
-	c, err := GetChainByIdentifier("hoodi/rollup-a")
+	r := New()
+	c, err := r.GetChainByIdentifier("hoodi/rollup-a")
 	if err != nil {
 		t.Fatalf("GetChainByIdentifier error: %v", err)
 	}
@@ -102,15 +109,16 @@ func TestGetChainByIdentifier(t *testing.T) {
 	}
 }
 
-func TestPackageLevel_GetChains_And_GetChainById(t *testing.T) {
-	allSlugs, err := ListChains()
+func TestRegistry_ListChains_And_GetChainById(t *testing.T) {
+	r := New()
+	all, err := r.ListChains()
 	if err != nil {
 		t.Fatalf("ListChains() error: %v", err)
 	}
-	if len(allSlugs) < 2 {
-		t.Fatalf("expected at least 2 chains in package-level ListChains, got %d", len(allSlugs))
+	if len(all) < 2 {
+		t.Fatalf("expected at least 2 chains, got %d", len(all))
 	}
-	c, err := GetChainById(88888)
+	c, err := r.GetChainById(88888)
 	if err != nil {
 		t.Fatalf("GetChainById error: %v", err)
 	}
@@ -120,5 +128,41 @@ func TestPackageLevel_GetChains_And_GetChainById(t *testing.T) {
 	}
 	if cfg.Name != "rollup-b" {
 		t.Fatalf("chain name = %s, want rollup-b", cfg.Name)
+	}
+}
+
+func TestNewFromDir_Validation(t *testing.T) {
+	// Missing networks/ should error
+	if _, err := NewFromDir(t.TempDir()); err == nil {
+		t.Fatalf("expected error for dir without networks/")
+	}
+	// Valid: point to embedded data directory on disk
+	r, err := NewFromDir("../data")
+	if err != nil {
+		t.Fatalf("NewFromDir(../data) error: %v", err)
+	}
+	nets, err := r.ListNetworks()
+	if err != nil {
+		t.Fatalf("ListNetworks error: %v", err)
+	}
+	if len(nets) == 0 {
+		t.Fatalf("expected at least one network from disk-backed registry")
+	}
+}
+
+func TestErrors_NotFound(t *testing.T) {
+	r := New()
+	if _, err := r.GetNetworkBySlug("nope"); err == nil || !errors.Is(err, ErrNetworkNotFound) {
+		t.Fatalf("expected ErrNetworkNotFound, got %v", err)
+	}
+	if _, err := r.GetChainByIdentifier("nope/x"); err == nil || !errors.Is(err, ErrNetworkNotFound) {
+		t.Fatalf("expected ErrNetworkNotFound for bad network, got %v", err)
+	}
+	hoodi, err := r.GetNetworkBySlug("hoodi")
+	if err != nil {
+		t.Fatalf("GetNetworkBySlug(hoodi): %v", err)
+	}
+	if _, err := hoodi.GetChainBySlug("x"); err == nil || !errors.Is(err, ErrChainNotFound) {
+		t.Fatalf("expected ErrChainNotFound, got %v", err)
 	}
 }

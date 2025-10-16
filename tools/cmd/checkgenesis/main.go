@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-    t "github.com/compose-network/registry/internal/types"
-    reg "github.com/compose-network/registry/registry"
+	t "github.com/compose-network/registry/internal/types"
+	reg "github.com/compose-network/registry/registry"
 	"github.com/klauspost/compress/zstd"
 )
 
@@ -31,12 +31,13 @@ func main() {
 	flag.StringVar(&base, "base", ".", "repository root")
 	flag.Parse()
 
-    // Load compose chains from embedded TOMLs (generic networks API)
-    n, err := reg.GetNetworkBySlug("hoodi")
-    if err != nil {
-        fatalf("get network hoodi: %v", err)
-    }
-    chains, err := n.ListChains()
+	// Load compose chains from embedded TOMLs (generic networks API)
+	r := reg.New()
+	n, err := r.GetNetworkBySlug("hoodi")
+	if err != nil {
+		fatalf("get network hoodi: %v", err)
+	}
+	chains, err := n.ListChains()
 	if err != nil {
 		fatalf("compose chains: %v", err)
 	}
@@ -56,11 +57,13 @@ func main() {
 	}
 
 	// For each chain, ensure genesis exists, decode and compare ids & time
-    for _, c := range chains {
-        slug := c.Slug()
-        ccfg, err := c.LoadConfig()
-        if err != nil { fatalf("load chain %s: %v", slug, err) }
-        expectID := int64(ccfg.ChainID)
+	for _, c := range chains {
+		slug := c.Slug()
+		ccfg, err := c.LoadConfig()
+		if err != nil {
+			fatalf("load chain %s: %v", slug, err)
+		}
+		expectID := int64(ccfg.ChainID)
 		if id2, ok := idsBySlug[slug]; ok && id2 != expectID {
 			fatalf("slug %s: chainList chain_id=%d != compose chain_id=%d", slug, id2, expectID)
 		}
@@ -114,16 +117,16 @@ func main() {
 			fatalf("%s chainId=%d, want %d", genPath, gotID, expectID)
 		}
 		// Compare timestamp vs compose TOML genesis.l2_time if present
-        if ccfg.Genesis.L2Time != 0 {
-            ts, err := anyToInt64(g.Timestamp)
-            if err != nil {
-                fatalf("%s timestamp parse: %v", genPath, err)
-            }
-            if ts != int64(ccfg.Genesis.L2Time) {
-                fatalf("%s timestamp=%d, want %d", genPath, ts, ccfg.Genesis.L2Time)
-            }
-        }
-    }
+		if ccfg.Genesis.L2Time != 0 {
+			ts, err := anyToInt64(g.Timestamp)
+			if err != nil {
+				fatalf("%s timestamp parse: %v", genPath, err)
+			}
+			if ts != int64(ccfg.Genesis.L2Time) {
+				fatalf("%s timestamp=%d, want %d", genPath, ts, ccfg.Genesis.L2Time)
+			}
+		}
+	}
 	fmt.Println("checkgenesis ok")
 }
 
