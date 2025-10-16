@@ -72,6 +72,7 @@ type ChainConfig struct {
 	ChainID   uint64 `toml:"chain_id"`
 	PublicRPC string `toml:"public_rpc"`
 	Explorer  string `toml:"explorer"`
+	Sequencer string `toml:"sequencer"`
 	Addresses struct {
 		Mailbox string `toml:"Mailbox"`
 	} `toml:"addresses"`
