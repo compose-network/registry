@@ -72,19 +72,17 @@ type ChainConfig struct {
 	ChainID   uint64 `toml:"chain_id"`
 	PublicRPC string `toml:"public_rpc"`
 	Explorer  string `toml:"explorer"`
-	Sequencer string `toml:"sequencer"`
 	Addresses struct {
 		Mailbox string `toml:"Mailbox"`
 	} `toml:"addresses"`
 	Genesis struct {
 		L2Time uint64 `toml:"l2_time"`
 	} `toml:"genesis"`
-	Compose struct {
-		Sequencer struct {
-			Host string `toml:"host"`
-			Port int    `toml:"port"`
-		} `toml:"sequencer"`
-	} `toml:"compose"`
+	Sequencer struct {
+		Host        string   `toml:"host"`
+		Port        int      `toml:"port"`
+		AuthPubkeys []string `toml:"auth_pubkeys"`
+	} `toml:"sequencer"`
 }
 
 // NetworkConfig is decoded from networks/<slug>/compose.toml.
@@ -95,12 +93,11 @@ type NetworkConfig struct {
 		PublicRPC string `toml:"public_rpc"`
 		Explorer  string `toml:"explorer"`
 	} `toml:"l1"`
-	Compose struct {
-		SP struct {
-			SuperblockContract string `toml:"superblock_contract"`
-			DisputeGameFactory string `toml:"dispute_game_factory"`
-		} `toml:"sp"`
-	} `toml:"compose"`
+	Publisher struct {
+		SuperblockContract string   `toml:"superblock_contract"`
+		DisputeGameFactory string   `toml:"dispute_game_factory"`
+		AuthPubkeys        []string `toml:"auth_pubkeys"`
+	} `toml:"publisher"`
 }
 
 // ListNetworks lists all available networks as handles.
