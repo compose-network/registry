@@ -8,9 +8,12 @@ export GOTOOLCHAIN=$(TOOLCHAIN)
 # Defaults for paths (caller can override)
 ROOT ?= ..
 BASE ?= ..
-OUT_TOML ?= $(BASE)/data/chainList.toml
-OUT_JSON ?= $(BASE)/data/chainList.json
-IN ?= $(BASE)/data/chainList.toml
+# Outputs/inputs are relative to BASE inside the tools; the generator/validator
+# will join them with -base. Keep these paths BASE-relative (no BASE prefix)
+# to avoid double-joining like "../../data/..." when invoked via -base.
+OUT_TOML ?= data/chainList.toml
+OUT_JSON ?= data/chainList.json
+IN ?= data/chainList.toml
 
 tidy:
 	$(GO) mod tidy
@@ -25,7 +28,7 @@ chainlist-gen: tidy
 	$(GO) run ./cmd/chainlist-gen -base $(BASE) -out-toml $(OUT_TOML) -out-json $(OUT_JSON)
 
 validate: tidy
-	$(GO) run ./cmd/validate -in $(IN)
+	$(GO) run ./cmd/validate -in $(BASE)/$(IN)
 
 checkgenesis: tidy
 	$(GO) run ./cmd/checkgenesis -base $(BASE)

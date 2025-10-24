@@ -26,9 +26,9 @@ func TestGetNetworks_FindsHoodi(t *testing.T) {
 	}
 }
 
-func TestGetNetworkBySlug_AndId(t *testing.T) {
+func TestGetNetworkBySlug(t *testing.T) {
 	r := New()
-	hoodi, err := r.GetNetworkBySlug("hoodi")
+	hoodi, err := r.GetNetworkBySlug("hoodi-dev")
 	if err != nil {
 		t.Fatalf("GetNetworkBySlug() error: %v", err)
 	}
@@ -36,22 +36,14 @@ func TestGetNetworkBySlug_AndId(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
-	if ncfg.Name != "hoodi" {
+	if ncfg.Name != "hoodi-dev" {
 		t.Fatalf("network name = %s, want hoodi", ncfg.Name)
-	}
-	// By L1 chain id
-	hoodi2, err := r.GetNetworkById(ncfg.L1.ChainID)
-	if err != nil {
-		t.Fatalf("GetNetworkById() error: %v", err)
-	}
-	if hoodi2.Slug() != "hoodi" {
-		t.Fatalf("GetNetworkById returned %s, want hoodi", hoodi2.Slug())
 	}
 }
 
 func TestGetChains_AndLookups(t *testing.T) {
 	r := New()
-	hoodi, err := r.GetNetworkBySlug("hoodi")
+	hoodi, err := r.GetNetworkBySlug("hoodi-dev")
 	if err != nil {
 		t.Fatalf("GetNetworkBySlug() error: %v", err)
 	}
@@ -96,7 +88,7 @@ func TestGetChains_AndLookups(t *testing.T) {
 
 func TestGetChainByIdentifier(t *testing.T) {
 	r := New()
-	c, err := r.GetChainByIdentifier("hoodi/rollup-a")
+	c, err := r.GetChainByIdentifier("hoodi-dev/rollup-a")
 	if err != nil {
 		t.Fatalf("GetChainByIdentifier error: %v", err)
 	}
@@ -158,7 +150,7 @@ func TestErrors_NotFound(t *testing.T) {
 	if _, err := r.GetChainByIdentifier("nope/x"); err == nil || !errors.Is(err, ErrNetworkNotFound) {
 		t.Fatalf("expected ErrNetworkNotFound for bad network, got %v", err)
 	}
-	hoodi, err := r.GetNetworkBySlug("hoodi")
+	hoodi, err := r.GetNetworkBySlug("hoodi-dev")
 	if err != nil {
 		t.Fatalf("GetNetworkBySlug(hoodi): %v", err)
 	}

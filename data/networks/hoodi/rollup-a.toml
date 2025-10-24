@@ -1,15 +1,15 @@
 name = "rollup-a"
-public_rpc = "http://optimism-stack-geth:8545"
-explorer = "https://blockscout-rollup-1.stage.ops.ssvlabsinternal.com/"
-chain_id = 77777
+public_rpc = "https://rpc-a.testnet.compose.network"
+explorer = "https://rollup-a.explorer.compose.network"
+chain_id = 11113
 
 [addresses]
-Mailbox = "0x248721a59a2756E579026aDA017bd9B6adFe3e57"
+Mailbox = "0x2498eF6bc1476652F5a47C50FAffBEa39Abbc4e5"
 
 [genesis]
-l2_time = 1756804404
+l2_time = 1760691360
 
 [sequencer]
-host = "optimism-stack-geth"
+host = "hoodi-op-stack-a-geth"
 port = 9898
 auth_pubkeys = []
