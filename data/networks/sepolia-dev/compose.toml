@@ -1,0 +1,11 @@
+name = "sepolia-dev"
+
+[l1]
+chain_id = 84532
+public_rpc = "https://sepolia.base.org"
+explorer  = "https://sepolia.basescan.org/"
+
+[publisher]
+superblock_contract = "0x0000000000000000000000000000000000000001"
+dispute_game_factory = "0x0000000000000000000000000000000000000000"
+auth_pubkeys = []
