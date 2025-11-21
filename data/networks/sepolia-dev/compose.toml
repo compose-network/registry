@@ -1,7 +1,7 @@
 name = "sepolia-dev"
 
 [l1]
-chain_id = 84532
+chain_id = 11155111
 public_rpc = "https://sepolia.base.org"
 explorer  = "https://sepolia.basescan.org/"
 
