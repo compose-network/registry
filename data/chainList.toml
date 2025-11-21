@@ -41,3 +41,25 @@
   [chains.parent]
     type = "L2"
     chain = "hoodi"
+
+[[chains]]
+  name = "rollup-a"
+  identifier = "sepolia-dev/rollup-a"
+  chain_id = 33333
+  rpc = ["https://rpc-a.devnet.compose.network"]
+  explorers = ["https://rollup-a.explorer.devnet.compose.network"]
+  data_availability_type = "eth-da"
+  [chains.parent]
+    type = "L2"
+    chain = "sepolia-dev"
+
+[[chains]]
+  name = "rollup-b"
+  identifier = "sepolia-dev/rollup-b"
+  chain_id = 44444
+  rpc = ["https://rpc-b.devnet.compose.network"]
+  explorers = ["https://rollup-b.explorer.devnet.compose.network"]
+  data_availability_type = "eth-da"
+  [chains.parent]
+    type = "L2"
+    chain = "sepolia-dev"

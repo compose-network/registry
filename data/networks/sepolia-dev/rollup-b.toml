@@ -1,0 +1,15 @@
+name = "rollup-b"
+public_rpc = "https://rpc-b.devnet.compose.network"
+explorer = "https://rollup-b.explorer.devnet.compose.network"
+chain_id = 44444
+
+[addresses]
+Mailbox = "0x2498eF6bc1476652F5a47C50FAffBEa39Abbc4e5"
+
+[genesis]
+l2_time = 1763717280
+
+[sequencer]
+host = "sepolia-op-stack-b-geth"
+port = 9898
+auth_pubkeys = []
